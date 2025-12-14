@@ -1,0 +1,7 @@
+data:
+  raw_path: "data/raw"
+  processed_path: "data/processed"
+
+trading:
+  max_drawdown: 0.10
+  risk_limit: 100000.0

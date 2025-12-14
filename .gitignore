@@ -1,0 +1,38 @@
+# Build directories
+build/
+Release/
+dist/
+*.egg-info/
+__pycache__/
+
+# Results (generated output)
+results/
+
+# Compiled binaries
+*.pyd
+*.so
+*.dll
+*.exe
+*.lib
+*.exp
+*.obj
+*.pdb
+*.ilk
+
+# Data
+*.bin
+data/raw/*
+data/processed/*
+datasets/
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+
+# Python environment
+.venv/
+venv/
+env/

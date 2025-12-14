@@ -1,0 +1,4 @@
+strategy:
+  name: "MyStrategy"
+  lookback_period: 20
+  threshold: 2.5

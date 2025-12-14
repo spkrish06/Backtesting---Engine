@@ -49,6 +49,7 @@ class MomentumBreakoutStrategy(Strategy):
         self.initial_cash = portfolio.cash()
         self.peak_equity = portfolio.cash()
         self.risk_halted = False
+        self.ended_ = False
         
     def on_start(self):
         print("="*60)
@@ -58,8 +59,16 @@ class MomentumBreakoutStrategy(Strategy):
         print("Stop Loss: 3.0%, Target: 5.0%")
         print("="*60)
         self.equity_curve.append(self.portfolio.cash())
+        self.start_dt = None
+        self.end_dt = None
     
     def on_tick(self, tick):
+        # Update timestamp
+        current_dt = datetime.fromtimestamp(tick.timestamp / 1e9)
+        if self.start_dt is None:
+            self.start_dt = current_dt
+        self.end_dt = current_dt
+
         # Update portfolio mark-to-market
         self.portfolio.update_prices(tick.symbol_id, tick.price)
         
@@ -126,7 +135,8 @@ class MomentumBreakoutStrategy(Strategy):
         
         # Exit: Price drops below 10-period low OR stop-loss OR target
         if self.position > 0 and len(self.lows) >= self.exit_period:
-            lowest_low = min(self.lows)
+            # Bug Fix: Must exclude current price from history to check for breakdown
+            lowest_low = min(list(self.lows)[:-1])
             
             exit_reason = None
             exit_price = None
@@ -172,6 +182,10 @@ class MomentumBreakoutStrategy(Strategy):
         pass
     
     def on_end(self):
+        if self.ended_:
+            return
+        self.ended_ = True
+
         print("\n" + "="*60)
         print("Momentum Breakout Strategy Complete")
         print("="*60)
@@ -179,7 +193,9 @@ class MomentumBreakoutStrategy(Strategy):
         results = BacktestResults(
             equity_curve=self.equity_curve,
             trades=self.trades,
-            initial_capital=self.initial_cash
+            initial_capital=self.initial_cash,
+            start_date=self.start_dt if hasattr(self, 'start_dt') else None,
+            end_date=self.end_dt if hasattr(self, 'end_dt') else None
         )
         results.print_summary()
         

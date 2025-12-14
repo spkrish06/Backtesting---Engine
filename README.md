@@ -33,24 +33,30 @@ python scripts/run_backtest_momentum.py
 
 ## Output
 
-Backtest started.
-  [ENTRY] BUY 100 @ $522.90 | Breakout High=$522.10 | Stop=$507.21 | Target=$549.04
-  [EXIT] SELL 100 @ $549.04 | TARGET | P&L: $+2614.50
-  ...
-  [RISK] Halted - Max drawdown exceeded!
+```text
+Momentum Breakout Strategy Complete
+============================================================
 
 ==================================================
-BACKTEST RESULTS
+BACKTEST RESULTS (Reliance Industries)
 ==================================================
+Duration:           3235 days
 Initial Capital:    $100,000.00
-Final Equity:       $152,149.70
-Total P&L:          $+52,149.70 (+52.15%)
+Final Equity:       $1,603,302.00
+Total P&L:          $+1,503,302.00 (+1503.30%)
 --------------------------------------------------
-Sharpe Ratio:       0.04
-Max Drawdown:       21.48% (Halted)
-CAGR:               0.01%
-Win Rate:           22.9%
+Sharpe Ratio:       8.27
+Sortino Ratio:      8.06
+Max Drawdown:       1.52%
+CAGR:               36.79%
 --------------------------------------------------
+Total Trades:       35739
+Win Rate:           19.9%
+Avg Win:            $244.98
+Avg Loss:           $-96.83
+Profit Factor:      2.53
+==================================================
+```
 
 Results exported to:
 - `results/backtest_results.json`

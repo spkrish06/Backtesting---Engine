@@ -94,13 +94,18 @@ def average_win_loss(trades: List[dict]) -> Tuple[float, float]:
     return avg_win, avg_loss
 
 
+
 class BacktestResults:
     """Container for backtest results and metrics."""
     
-    def __init__(self, equity_curve: List[float], trades: List[dict], initial_capital: float = 100000.0):
+    def __init__(self, equity_curve: List[float], trades: List[dict], 
+                 initial_capital: float = 100000.0,
+                 start_date: datetime = None, end_date: datetime = None):
         self.equity_curve = equity_curve
         self.trades = trades
         self.initial_capital = initial_capital
+        self.starts_at = start_date
+        self.ends_at = end_date
         self.returns = compute_returns(equity_curve) if len(equity_curve) > 1 else np.array([])
         
     def summary(self) -> dict:
@@ -108,20 +113,40 @@ class BacktestResults:
         max_dd, peak_idx, trough_idx = max_drawdown(self.equity_curve)
         avg_win, avg_loss = average_win_loss(self.trades)
         
+        # Calculate duration in years for correct annualization
+        years = 0.0
+        periods_per_year = 252 # Fallback
+        
+        if self.starts_at and self.ends_at:
+            duration = (self.ends_at - self.starts_at).total_seconds()
+            if duration > 0:
+                years = duration / (365.25 * 24 * 3600)
+                # Dynamic periods per year based on tick resolution
+                if len(self.equity_curve) > 1:
+                    total_ticks = len(self.equity_curve)
+                    periods_per_year = total_ticks / years
+
+        # Re-calc CAGR with time
+        cagr_val = 0.0
+        final_eq = self.equity_curve[-1] if self.equity_curve else self.initial_capital
+        if years > 0 and self.initial_capital > 0 and final_eq > 0:
+             cagr_val = (final_eq / self.initial_capital) ** (1 / years) - 1
+
         return {
             'initial_capital': self.initial_capital,
             'final_equity': self.equity_curve[-1] if self.equity_curve else self.initial_capital,
             'total_pnl': self.equity_curve[-1] - self.initial_capital if self.equity_curve else 0.0,
             'total_return_pct': (self.equity_curve[-1] / self.initial_capital - 1) * 100 if self.equity_curve else 0.0,
-            'sharpe_ratio': sharpe_ratio(self.returns),
-            'sortino_ratio': sortino_ratio(self.returns),
+            'sharpe_ratio': sharpe_ratio(self.returns, periods_per_year=periods_per_year),
+            'sortino_ratio': sortino_ratio(self.returns, periods_per_year=periods_per_year),
             'max_drawdown_pct': max_dd * 100,
-            'cagr_pct': cagr(self.equity_curve) * 100,
+            'cagr_pct': cagr_val * 100,
             'total_trades': len(self.trades),
             'win_rate_pct': win_rate(self.trades) * 100,
             'avg_win': avg_win,
             'avg_loss': avg_loss,
             'profit_factor': abs(avg_win / avg_loss) if avg_loss != 0 else np.inf,
+            'duration_days': (self.ends_at - self.starts_at).days if (self.starts_at and self.ends_at) else 0
         }
     
     def print_summary(self):
@@ -130,6 +155,7 @@ class BacktestResults:
         print("\n" + "=" * 50)
         print("BACKTEST RESULTS")
         print("=" * 50)
+        print(f"Duration:           {s.get('duration_days', 0)} days")
         print(f"Initial Capital:    ${s['initial_capital']:,.2f}")
         print(f"Final Equity:       ${s['final_equity']:,.2f}")
         print(f"Total P&L:          ${s['total_pnl']:+,.2f} ({s['total_return_pct']:+.2f}%)")
